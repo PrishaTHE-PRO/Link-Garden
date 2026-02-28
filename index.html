@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Link Garden</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #0f1a0f;
+      color: #c8e6c9;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #1b3a1b;
+    }
+
+    header .logo {
+      font-size: 22px;
+      font-weight: 700;
+      color: #81c784;
+      letter-spacing: 0.5px;
+    }
+
+    header .leaf {
+      font-size: 24px;
+    }
+
+    .hero {
+      margin-top: 80px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 700;
+      color: #a5d6a7;
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: #558b5e;
+    }
+
+    .input-area {
+      margin-top: 48px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 620px;
+      padding: 0 20px;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 14px 18px;
+      font-size: 15px;
+      border: 2px solid #2e5230;
+      border-right: none;
+      border-radius: 10px 0 0 10px;
+      background: #132013;
+      color: #c8e6c9;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-area input::placeholder {
+      color: #3a6b3a;
+    }
+
+    .input-area input:focus {
+      border-color: #66bb6a;
+    }
+
+    .input-area button {
+      padding: 14px 22px;
+      font-size: 15px;
+      font-weight: 600;
+      background: #388e3c;
+      color: #e8f5e9;
+      border: 2px solid #388e3c;
+      border-radius: 0 10px 10px 0;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .input-area button:hover {
+      background: #43a047;
+      border-color: #43a047;
+    }
+
+    .links-section {
+      margin-top: 48px;
+      width: 100%;
+      max-width: 620px;
+      padding: 0 20px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .links-section .section-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #3a6b3a;
+      margin-bottom: 4px;
+    }
+
+    .link-item {
+      display: block;
+      color: #81c784;
+      text-decoration: none;
+      font-size: 14px;
+      padding: 4px 0;
+      word-break: break-all;
+      transition: color 0.15s;
+    }
+
+    .link-item:hover {
+      color: #a5d6a7;
+      text-decoration: underline;
+    }
+
+    .empty-hint {
+      font-size: 14px;
+      color: #2e5230;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span class="leaf">🌿</span>
+    <span class="logo">Link Garden</span>
+  </header>
+
+  <div class="hero">
+    <h1>Your Link Garden</h1>
+    <p>Paste a link and plant it to grow your collection.</p>
+  </div>
+
+  <div class="input-area">
+    <input
+      type="text"
+      id="linkInput"
+      placeholder="Paste a link here..."
+      autofocus
+    />
+    <button onclick="plantLink()">🌱 Plant</button>
+  </div>
+
+  <div class="links-section" id="linksSection">
+    <div class="section-label" id="sectionLabel" style="display:none;">Planted links</div>
+    <span class="empty-hint" id="emptyHint">Your planted links will appear here.</span>
+  </div>
+
+  <script>
+    const input = document.getElementById('linkInput');
+    const linksSection = document.getElementById('linksSection');
+    const sectionLabel = document.getElementById('sectionLabel');
+    const emptyHint = document.getElementById('emptyHint');
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') plantLink();
+    });
+
+    function plantLink() {
+      const raw = input.value.trim();
+      if (!raw) return;
+
+      const url = raw.startsWith('http://') || raw.startsWith('https://') ? raw : 'https://' + raw;
+
+      if (emptyHint) emptyHint.remove();
+      sectionLabel.style.display = 'block';
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = 'link-item';
+      link.textContent = url;
+
+      linksSection.appendChild(link);
+      input.value = '';
+      input.focus();
+    }
+  </script>
+
+</body>
+</html>
