@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Link Garden</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #0f1a0f;
+      color: #c8e6c9;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Auth Screen ─────────────────────────────────── */
+    #authScreen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 14px;
+      width: 100%;
+    }
+
+    #authScreen h2 {
+      color: #81c784;
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    #authScreen input {
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #2e5230;
+      background: #132013;
+      color: #c8e6c9;
+      width: 300px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    #authScreen input:focus {
+      border-color: #66bb6a;
+    }
+
+    #authScreen input::placeholder {
+      color: #3a6b3a;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      padding: 10px 24px;
+      background: #388e3c;
+      color: #e8f5e9;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .btn-primary:hover { background: #43a047; }
+
+    .btn-secondary {
+      padding: 10px 24px;
+      background: transparent;
+      color: #81c784;
+      border: 1px solid #2e5230;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: border-color 0.2s;
+    }
+
+    .btn-secondary:hover { border-color: #66bb6a; }
+
+    #authError {
+      color: #ef9a9a;
+      font-size: 13px;
+      min-height: 18px;
+    }
+
+    .auth-toggle {
+      font-size: 13px;
+      color: #558b5e;
+      cursor: pointer;
+    }
+
+    .auth-toggle span {
+      color: #81c784;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* ── Dashboard ───────────────────────────────────── */
+    #dashboard {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    header {
+      width: 100%;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #1b3a1b;
+    }
+
+    header .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: #81c784;
+      letter-spacing: 0.5px;
+    }
+
+    header .leaf { font-size: 22px; }
+
+    #userEmail {
+      margin-left: auto;
+      font-size: 13px;
+      color: #3a6b3a;
+    }
+
+    .btn-logout {
+      padding: 6px 14px;
+      background: transparent;
+      color: #558b5e;
+      border: 1px solid #1b3a1b;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-left: 12px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-logout:hover {
+      border-color: #2e5230;
+      color: #81c784;
+    }
+
+    .hero {
+      margin-top: 80px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 700;
+      color: #a5d6a7;
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: #558b5e;
+    }
+
+    .input-area {
+      margin-top: 48px;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 620px;
+      padding: 0 20px;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 14px 18px;
+      font-size: 15px;
+      border: 2px solid #2e5230;
+      border-right: none;
+      border-radius: 10px 0 0 10px;
+      background: #132013;
+      color: #c8e6c9;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-area input::placeholder { color: #3a6b3a; }
+    .input-area input:focus { border-color: #66bb6a; }
+
+    .input-area button {
+      padding: 14px 22px;
+      font-size: 15px;
+      font-weight: 600;
+      background: #388e3c;
+      color: #e8f5e9;
+      border: 2px solid #388e3c;
+      border-radius: 0 10px 10px 0;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .input-area button:hover {
+      background: #43a047;
+      border-color: #43a047;
+    }
+
+    .links-section {
+      margin-top: 48px;
+      width: 100%;
+      max-width: 620px;
+      padding: 0 20px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .links-section .section-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #3a6b3a;
+      margin-bottom: 4px;
+    }
+
+    .link-item {
+      display: block;
+      color: #81c784;
+      text-decoration: none;
+      font-size: 14px;
+      padding: 4px 0;
+      word-break: break-all;
+      transition: color 0.15s;
+    }
+
+    .link-item:hover {
+      color: #a5d6a7;
+      text-decoration: underline;
+    }
+
+    .empty-hint {
+      font-size: 14px;
+      color: #2e5230;
+      font-style: italic;
+    }
+
+    /* ── Auth Prompt Modal ───────────────────────────── */
+    #authPromptModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-box {
+      background: #132013;
+      border: 1px solid #2e5230;
+      border-radius: 14px;
+      padding: 36px 32px;
+      text-align: center;
+      max-width: 340px;
+      width: 90%;
+    }
+
+    .modal-box p {
+      color: #a5d6a7;
+      font-size: 16px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-box .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Auth Screen ──────────────────────────────────── -->
+  <div id="authScreen">
+    <span style="font-size: 40px;">🌿</span>
+    <h2>Welcome to Link Garden</h2>
+    <p style="color:#3a6b3a; font-size:14px;" id="authSubtitle">Sign in to grow your collection.</p>
+
+    <input id="authEmail" type="email" placeholder="Email" autocomplete="email" />
+    <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" />
+
+    <div class="auth-buttons" id="authButtons">
+      <button class="btn-primary" onclick="logIn()">Log In</button>
+      <button class="btn-secondary" onclick="signUp()">Sign Up</button>
+    </div>
+
+    <p id="authError"></p>
+
+    <p class="auth-toggle" id="authToggle">
+      No account? <span onclick="switchToSignup()">Create one</span>
+    </p>
+  </div>
+
+  <!-- ── Dashboard ────────────────────────────────────── -->
+  <div id="dashboard">
+    <header>
+      <span class="leaf">🌿</span>
+      <span class="logo">Link Garden</span>
+      <span id="userEmail"></span>
+      <button class="btn-logout" onclick="logOut()">Log out</button>
+    </header>
+
+    <div class="hero">
+      <h1>Your Link Garden</h1>
+      <p>Paste a link and plant it to grow your collection.</p>
+    </div>
+
+    <div class="input-area">
+      <input
+        type="text"
+        id="linkInput"
+        placeholder="Paste a link here..."
+        autofocus
+      />
+      <button onclick="plantLink()">🌱 Plant</button>
+    </div>
+
+    <div class="links-section" id="linksSection">
+      <div class="section-label" id="sectionLabel" style="display:none;">Planted links</div>
+      <span class="empty-hint" id="emptyHint">Your planted links will appear here.</span>
+    </div>
+  </div>
+
+  <!-- ── Auth Prompt Modal (unauthenticated plant attempt) ── -->
+  <div id="authPromptModal">
+    <div class="modal-box">
+      <p>🌱 Create an account to plant and save your links across sessions.</p>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="goToSignup()">Create Account</button>
+        <button class="btn-secondary" onclick="closeAuthPrompt()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Firebase (CDN, no build tool needed) ─────────── -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      query,
+      where,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBt0nRF9lvAt_ODtNVnH6tRoYxP3I3YUa0",
+      authDomain: "link-garden-c3369.firebaseapp.com",
+      projectId: "link-garden-c3369",
+      storageBucket: "link-garden-c3369.firebasestorage.app",
+      messagingSenderId: "447163301900",
+      appId: "1:447163301900:web:9caee919348f3a8ebeae29",
+      measurementId: "G-P4G20SBKKB"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    // ── Auth state listener ────────────────────────────
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        showDashboard(user);
+        loadLinks(user.uid);
+      } else {
+        showAuthScreen();
+      }
+    });
+
+    function showDashboard(user) {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'flex';
+      document.getElementById('userEmail').textContent = user.email;
+    }
+
+    function showAuthScreen() {
+      document.getElementById('authScreen').style.display = 'flex';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    // ── Sign up ────────────────────────────────────────
+    window.signUp = async function () {
+      clearError();
+      const email    = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } catch (e) {
+        showError(friendlyError(e.code));
+      }
+    };
+
+    // ── Log in ─────────────────────────────────────────
+    window.logIn = async function () {
+      clearError();
+      const email    = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (e) {
+        showError(friendlyError(e.code));
+      }
+    };
+
+    // ── Log out ────────────────────────────────────────
+    window.logOut = async function () {
+      await signOut(auth);
+    };
+
+    // ── Plant link ─────────────────────────────────────
+    window.plantLink = async function () {
+      const user = auth.currentUser;
+      const raw  = document.getElementById('linkInput').value.trim();
+      if (!raw) return;
+
+      if (!user) {
+        document.getElementById('authPromptModal').style.display = 'flex';
+        return;
+      }
+
+      const url = raw.startsWith('http://') || raw.startsWith('https://')
+        ? raw : 'https://' + raw;
+
+      await addDoc(collection(db, 'links'), {
+        uid:     user.uid,
+        url,
+        savedAt: new Date()
+      });
+
+      document.getElementById('linkInput').value = '';
+      loadLinks(user.uid);
+    };
+
+    // ── Load links from Firestore ──────────────────────
+    async function loadLinks(uid) {
+      const q        = query(collection(db, 'links'), where('uid', '==', uid), orderBy('savedAt', 'desc'));
+      const snapshot = await getDocs(q);
+
+      const section = document.getElementById('linksSection');
+      const label   = document.getElementById('sectionLabel');
+      const hint    = document.getElementById('emptyHint');
+
+      section.querySelectorAll('.link-item').forEach(el => el.remove());
+
+      if (snapshot.empty) {
+        hint.style.display  = 'block';
+        label.style.display = 'none';
+        return;
+      }
+
+      hint.style.display  = 'none';
+      label.style.display = 'block';
+
+      snapshot.forEach(doc => {
+        const { url } = doc.data();
+        const a = document.createElement('a');
+        a.href      = url;
+        a.target    = '_blank';
+        a.rel       = 'noopener noreferrer';
+        a.className = 'link-item';
+        a.textContent = url;
+        section.appendChild(a);
+      });
+    }
+
+    // ── Modal controls ─────────────────────────────────
+    window.closeAuthPrompt = function () {
+      document.getElementById('authPromptModal').style.display = 'none';
+    };
+
+    window.goToSignup = function () {
+      closeAuthPrompt();
+      showAuthScreen();
+      switchToSignup();
+    };
+
+    // ── Auth screen toggle (login ↔ signup) ────────────
+    window.switchToSignup = function () {
+      document.getElementById('authSubtitle').textContent = 'Create your account to get started.';
+      document.getElementById('authToggle').innerHTML = 'Already have an account? <span onclick="switchToLogin()">Log in</span>';
+    };
+
+    window.switchToLogin = function () {
+      document.getElementById('authSubtitle').textContent = 'Sign in to grow your collection.';
+      document.getElementById('authToggle').innerHTML = 'No account? <span onclick="switchToSignup()">Create one</span>';
+    };
+
+    // ── Keyboard shortcut ──────────────────────────────
+    document.getElementById('linkInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') plantLink();
+    });
+
+    // ── Helpers ────────────────────────────────────────
+    function showError(msg) {
+      document.getElementById('authError').textContent = msg;
+    }
+
+    function clearError() {
+      document.getElementById('authError').textContent = '';
+    }
+
+    function friendlyError(code) {
+      const map = {
+        'auth/invalid-email':          'Please enter a valid email address.',
+        'auth/user-not-found':         'No account found with that email.',
+        'auth/wrong-password':         'Incorrect password.',
+        'auth/email-already-in-use':   'An account with this email already exists.',
+        'auth/weak-password':          'Password must be at least 6 characters.',
+        'auth/invalid-credential':     'Incorrect email or password.',
+        'auth/too-many-requests':      'Too many attempts. Please try again later.',
+      };
+      return map[code] || 'Something went wrong. Please try again.';
+    }
+  </script>
+
+</body>
+</html>
