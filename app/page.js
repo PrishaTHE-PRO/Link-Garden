@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   getAuth,
@@ -13,10 +13,9 @@ import {
   getFirestore,
   collection,
   addDoc,
-  getDocs,
+  onSnapshot,
   query,
   where,
-  orderBy,
 } from 'firebase/firestore';
 import { app } from '../lib/firebase';
 import PixelPlant from '../components/PixelPlant';
@@ -24,44 +23,50 @@ import PixelPlant from '../components/PixelPlant';
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
+function hashVariant(str) {
+  return Math.abs((str || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % 5;
+}
+
 export default function Home() {
-  const [user,           setUser]           = useState(null);
-  const [loading,        setLoading]        = useState(true);
-  const [links,          setLinks]          = useState([]);
-  const [clusters,       setClusters]       = useState([]);
-  const [linkInput,      setLinkInput]      = useState('');
-  const [planting,       setPlanting]       = useState(false);
-  const [authEmail,      setAuthEmail]      = useState('');
-  const [authPassword,   setAuthPassword]   = useState('');
-  const [authError,      setAuthError]      = useState('');
-  const [isSignup,       setIsSignup]       = useState(false);
-  const [showPrompt,     setShowPrompt]     = useState(false);
-  const [insight,        setInsight]        = useState('');
-  const [insightLoading, setInsightLoading] = useState(false);
+  const [user,              setUser]              = useState(null);
+  const [loading,           setLoading]           = useState(true);
+  const [categories,        setCategories]        = useState([]);
+  const [linkInput,         setLinkInput]         = useState('');
+  const [pendingUrl,        setPendingUrl]        = useState('');
+  const [showPicker,        setShowPicker]        = useState(false);
+  const [newCatName,        setNewCatName]        = useState('');
+  const [authEmail,         setAuthEmail]         = useState('');
+  const [authPassword,      setAuthPassword]      = useState('');
+  const [authError,         setAuthError]         = useState('');
+  const [isSignup,          setIsSignup]          = useState(false);
+  const [showPrompt,        setShowPrompt]        = useState(false);
+  const [insight,           setInsight]           = useState('');
+  const [insightLoading,    setInsightLoading]    = useState(false);
+  const newCatRef = useRef(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
+    let unsubCats = null;
+
+    const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
+
+      if (unsubCats) { unsubCats(); unsubCats = null; }
+
       if (u) {
-        loadLinks(u.uid);
-        loadClusters(u.uid);
+        const q = query(collection(db, 'categories'), where('uid', '==', u.uid));
+        unsubCats = onSnapshot(q, (snap) => {
+          const cats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          cats.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+          setCategories(cats);
+        });
+      } else {
+        setCategories([]);
       }
     });
-    return unsub;
+
+    return () => { unsubAuth(); if (unsubCats) unsubCats(); };
   }, []);
-
-  async function loadLinks(uid) {
-    const q        = query(collection(db, 'links'), where('uid', '==', uid), orderBy('savedAt', 'desc'));
-    const snapshot = await getDocs(q);
-    setLinks(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-  }
-
-  async function loadClusters(uid) {
-    const q        = query(collection(db, 'clusters'), where('uid', '==', uid));
-    const snapshot = await getDocs(q);
-    setClusters(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-  }
 
   async function signUp() {
     setAuthError('');
@@ -77,72 +82,56 @@ export default function Home() {
 
   async function logOut() {
     await signOut(auth);
-    setLinks([]); setClusters([]); setInsight('');
+    setCategories([]); setInsight('');
   }
 
-  async function plantLink() {
+  // Step 1: user hits Plant → show category picker
+  function openPicker() {
     if (!linkInput.trim()) return;
     if (!user) { setShowPrompt(true); return; }
-
-    setPlanting(true);
     const raw = linkInput.trim();
     const url = raw.startsWith('http://') || raw.startsWith('https://')
       ? raw : 'https://' + raw;
+    setPendingUrl(url);
+    setLinkInput('');
+    setShowPicker(true);
+    setTimeout(() => newCatRef.current?.focus(), 50);
+  }
 
-    try {
-      // Single API call: fetches metadata + Gemini naming, all server-side
-      const res = await fetch('/api/plant-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, existingClusters: clusters.map(c => c.name) }),
-      });
-      const { title, description, plantName, clusterName } = await res.json();
+  // Step 2: user picks or creates a category
+  function confirmCategory(name) {
+    const categoryName = name.trim();
+    if (!categoryName) return;
 
-      const variant = Math.abs(
-        (clusterName || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-      ) % 3;
+    const existing = categories.find(c => c.name === categoryName);
+    const variant  = hashVariant(categoryName);
 
-      // Save to Firestore
-      const docRef = await addDoc(collection(db, 'links'), {
-        uid: user.uid,
-        url,
-        title,
-        plantName,
-        description,
-        clusterName,
-        variant,
-        savedAt: new Date(),
-      });
+    setShowPicker(false);
+    setPendingUrl('');
+    setNewCatName('');
 
-      // Optimistic update — prepend immediately, no re-fetch needed
-      const newLink = { id: docRef.id, uid: user.uid, url, title, plantName, description, clusterName, variant, savedAt: new Date() };
-      setLinks(prev => [newLink, ...prev]);
-      setLinkInput('');
+    // Save link (fire and forget)
+    addDoc(collection(db, 'links'), {
+      uid: user.uid, url: pendingUrl, categoryName, savedAt: new Date(),
+    });
 
-      // Add cluster to local state if new
-      if (!clusters.find(c => c.name === clusterName)) {
-        const clusterRef = await addDoc(collection(db, 'clusters'), {
-          uid: user.uid, name: clusterName, createdAt: new Date(),
-        });
-        setClusters(prev => [...prev, { id: clusterRef.id, uid: user.uid, name: clusterName }]);
-      }
-    } catch (err) {
-      console.error('Error planting link:', err);
-    } finally {
-      setPlanting(false);
+    // Save new category — onSnapshot will update the UI automatically
+    if (!existing) {
+      addDoc(collection(db, 'categories'), {
+        uid: user.uid, name: categoryName, variant, createdAt: new Date(),
+      }).catch(err => console.error('Failed to save category:', err));
     }
   }
 
   async function generateInsight() {
-    if (!user || links.length === 0) return;
+    if (!user || categories.length === 0) return;
     setInsightLoading(true);
-    const clusterNames = [...new Set(links.map(l => l.clusterName).filter(Boolean))];
     const stats = {
-      topClusters:          clusterNames.slice(0, 5),
-      linkCountThisMonth:   links.length,
-      newClustersThisMonth: clusters.length,
-      breadthScore:         Math.min(clusterNames.length / 10, 1).toFixed(2),
-      depthScore:           (links.length / Math.max(clusterNames.length, 1)).toFixed(1),
+      topClusters:          categories.slice(0, 5).map(c => c.name),
+      linkCountThisMonth:   categories.length,
+      newClustersThisMonth: categories.length,
+      breadthScore:         Math.min(categories.length / 10, 1).toFixed(2),
+      depthScore:           '1.0',
     };
     try {
       const res = await fetch('/api/generate-insight', {
@@ -152,8 +141,7 @@ export default function Home() {
       });
       const { insight: text } = await res.json();
       setInsight(text);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setInsight('Your garden is growing beautifully. Keep exploring!');
     } finally {
       setInsightLoading(false);
@@ -247,15 +235,13 @@ export default function Home() {
             placeholder="Paste a link here..."
             value={linkInput}
             onChange={e => setLinkInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && plantLink()}
+            onKeyDown={e => e.key === 'Enter' && openPicker()}
             autoFocus
           />
-          <button onClick={plantLink} disabled={planting}>
-            {planting ? '🌱 Planting…' : '🌱 Plant'}
-          </button>
+          <button onClick={openPicker}>🌱 Plant</button>
         </div>
 
-        {links.length > 0 && (
+        {categories.length > 0 && (
           <div className="insight-box">
             <div className="insight-card">
               <h3>Garden Insight</h3>
@@ -273,17 +259,14 @@ export default function Home() {
         )}
 
         <div className="garden-grid-wrapper">
-          {links.length === 0
+          {categories.length === 0
             ? <span className="empty-hint">Your planted links will appear here.</span>
             : (
               <div className="garden-grid">
-                {links.map(link => (
-                  <Link key={link.id} href={`/link/${link.id}`} className="plant-card">
-                    <PixelPlant variant={link.variant ?? 0} size={1.4} />
-                    <p className="plant-title">{link.plantName || link.title || '🌱'}</p>
-                    {link.clusterName && (
-                      <span className="plant-cluster">{link.clusterName}</span>
-                    )}
+                {categories.map(cat => (
+                  <Link key={cat.id} href={`/category/${encodeURIComponent(cat.name)}`} className="plant-card">
+                    <PixelPlant variant={cat.variant ?? 0} size={1.4} />
+                    <span className="plant-cluster">{cat.name}</span>
                   </Link>
                 ))}
               </div>
@@ -291,6 +274,59 @@ export default function Home() {
           }
         </div>
       </div>
+
+      {/* ── Category picker modal ── */}
+      {showPicker && (
+        <div className="modal-overlay">
+          <div className="modal-box category-picker">
+            <h3>Where does this link belong?</h3>
+
+            {categories.length > 0 && (
+              <>
+                <div className="picker-section-label">Add to an existing category</div>
+                <div className="picker-chips">
+                  {categories.map(cat => (
+                    <button key={cat.id} className="picker-chip" onClick={() => confirmCategory(cat.name)}>
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="picker-divider"><span>or create a new one</span></div>
+              </>
+            )}
+
+            {categories.length === 0 && (
+              <p className="picker-section-label" style={{ textAlign: 'center' }}>
+                Name your first category to get started
+              </p>
+            )}
+
+            <div className="picker-new">
+              <input
+                ref={newCatRef}
+                type="text"
+                placeholder="Category name…"
+                value={newCatName}
+                onChange={e => setNewCatName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && confirmCategory(newCatName)}
+                autoFocus={categories.length === 0}
+              />
+              <button
+                className="btn-primary picker-add"
+                onClick={() => confirmCategory(newCatName)}
+                disabled={!newCatName.trim()}
+              >
+                Create
+              </button>
+            </div>
+
+            <button className="btn-secondary" style={{ width: '100%' }}
+              onClick={() => { setShowPicker(false); setPendingUrl(''); setNewCatName(''); }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

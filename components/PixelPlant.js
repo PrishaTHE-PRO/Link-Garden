@@ -1,86 +1,23 @@
-// Pixel art succulent plant — 3 variants based on cluster
-const PS = 6; // pixel size in px
-
-const G1 = '#7ab885';
-const G2 = '#5a8f6a';
-const G3 = '#3d6b4a';
-const G4 = '#a0d4a8';
-const P1 = '#c1784f';
-const P2 = '#a85e35';
-const P3 = '#d4896a';
-const P4 = '#8B4513';
-
-// Each variant is a list of [row, col, color]
-const VARIANTS = [
-  // Variant 0 — round succulent (like the image)
-  [
-    [0,4,G3],[0,5,G3],
-    [1,3,G2],[1,4,G1],[1,5,G1],[1,6,G2],
-    [2,1,G3],[2,2,G2],[2,3,G4],[2,4,G1],[2,5,G1],[2,6,G4],[2,7,G2],[2,8,G3],
-    [3,0,G3],[3,1,G2],[3,2,G4],[3,3,G4],[3,4,G4],[3,5,G4],[3,6,G4],[3,7,G2],[3,8,G3],
-    [4,1,G3],[4,2,G2],[4,3,G1],[4,4,G2],[4,5,G2],[4,6,G1],[4,7,G2],[4,8,G3],
-    [5,2,G3],[5,3,G2],[5,4,G1],[5,5,G1],[5,6,G2],[5,7,G3],
-    [6,3,G3],[6,4,G2],[6,5,G2],[6,6,G3],
-    [7,4,G2],[7,5,G2],
-    // pot rim
-    [8,2,P4],[8,3,P4],[8,4,P4],[8,5,P4],[8,6,P4],[8,7,P4],
-    // pot body
-    [9,2,P2],[9,3,P3],[9,4,P1],[9,5,P1],[9,6,P3],[9,7,P2],
-    [10,2,P2],[10,3,P1],[10,4,P1],[10,5,P1],[10,6,P1],[10,7,P2],
-    [11,3,P2],[11,4,P1],[11,5,P1],[11,6,P2],
-    [12,3,P2],[12,4,P2],[12,5,P2],[12,6,P2],
-  ],
-
-  // Variant 1 — tall spiky plant
-  [
-    [0,4,G3],[0,5,G3],
-    [1,3,G2],[1,4,G1],[1,5,G1],[1,6,G2],
-    [2,2,G3],[2,3,G2],[2,4,G4],[2,5,G4],[2,6,G2],[2,7,G3],
-    [3,1,G3],[3,2,G2],[3,3,G1],[3,4,G4],[3,5,G4],[3,6,G1],[3,7,G2],[3,8,G3],
-    [4,2,G3],[4,3,G2],[4,4,G1],[4,5,G1],[4,6,G2],[4,7,G3],
-    [5,3,G2],[5,4,G2],[5,5,G2],[5,6,G2],
-    [6,3,G3],[6,4,G2],[6,5,G2],[6,6,G3],
-    [7,4,G2],[7,5,G2],
-    [8,2,P4],[8,3,P4],[8,4,P4],[8,5,P4],[8,6,P4],[8,7,P4],
-    [9,2,P2],[9,3,P3],[9,4,P1],[9,5,P1],[9,6,P3],[9,7,P2],
-    [10,2,P2],[10,3,P1],[10,4,P1],[10,5,P1],[10,6,P1],[10,7,P2],
-    [11,3,P2],[11,4,P1],[11,5,P1],[11,6,P2],
-    [12,3,P2],[12,4,P2],[12,5,P2],[12,6,P2],
-  ],
-
-  // Variant 2 — wide bushy plant
-  [
-    [0,4,G2],[0,5,G2],
-    [1,2,G3],[1,3,G2],[1,4,G1],[1,5,G1],[1,6,G2],[1,7,G3],
-    [2,0,G3],[2,1,G2],[2,2,G4],[2,3,G1],[2,4,G4],[2,5,G4],[2,6,G1],[2,7,G4],[2,8,G2],[2,9,G3],
-    [3,0,G3],[3,1,G2],[3,2,G1],[3,3,G4],[3,4,G4],[3,5,G4],[3,6,G4],[3,7,G1],[3,8,G2],[3,9,G3],
-    [4,1,G3],[4,2,G2],[4,3,G1],[4,4,G1],[4,5,G1],[4,6,G1],[4,7,G2],[4,8,G3],
-    [5,2,G3],[5,3,G2],[5,4,G4],[5,5,G4],[5,6,G2],[5,7,G3],
-    [6,3,G3],[6,4,G2],[6,5,G2],[6,6,G3],
-    [7,4,G2],[7,5,G2],
-    [8,2,P4],[8,3,P4],[8,4,P4],[8,5,P4],[8,6,P4],[8,7,P4],
-    [9,2,P2],[9,3,P3],[9,4,P1],[9,5,P1],[9,6,P3],[9,7,P2],
-    [10,2,P2],[10,3,P1],[10,4,P1],[10,5,P1],[10,6,P1],[10,7,P2],
-    [11,3,P2],[11,4,P1],[11,5,P1],[11,6,P2],
-    [12,3,P2],[12,4,P2],[12,5,P2],[12,6,P2],
-  ],
+const PLANTS = [
+  '/plant1.png',
+  '/plant2.png',
+  '/plant3.png',
+  '/plant4.png',
+  '/plant5.png',
 ];
 
 export default function PixelPlant({ variant = 0, size = 1 }) {
-  const pixels = VARIANTS[variant % VARIANTS.length];
-  const ps     = Math.round(PS * size);
-  const cols   = 10;
-  const rows   = 13;
+  const src    = PLANTS[variant % PLANTS.length];
+  const width  = Math.round(80 * size);
+  const height = Math.round(80 * size);
 
   return (
-    <svg
-      width={cols * ps}
-      height={rows * ps}
-      style={{ imageRendering: 'pixelated', display: 'block' }}
-    >
-      {pixels.map(([row, col, color], i) => (
-        <rect key={i} x={col * ps} y={row * ps} width={ps} height={ps} fill={color} />
-      ))}
-    </svg>
+    <img
+      src={src}
+      width={width}
+      height={height}
+      alt="plant"
+      style={{ objectFit: 'contain', display: 'block' }}
+    />
   );
 }

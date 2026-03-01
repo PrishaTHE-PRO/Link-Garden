@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { app } from '../../../lib/firebase';
 import PixelPlant from '../../../components/PixelPlant';
@@ -12,33 +12,24 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 export default function LinkDetail() {
-  const { id }              = useParams();
-  const [link, setLink]     = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { id }                  = useParams();
+  const [link, setLink]         = useState(null);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) { setLoading(false); setNotFound(true); return; }
-      try {
-        const snap = await getDoc(doc(db, 'links', id));
-        if (!snap.exists() || snap.data().uid !== user.uid) {
-          setNotFound(true);
-        } else {
-          setLink({ id: snap.id, ...snap.data() });
-        }
-      } catch (err) {
-        console.error(err);
+    const user = auth.currentUser;
+    if (!user) { setNotFound(true); return; }
+
+    getDoc(doc(db, 'links', id)).then(snap => {
+      if (!snap.exists() || snap.data().uid !== user.uid) {
         setNotFound(true);
-      } finally {
-        setLoading(false);
+      } else {
+        setLink({ id: snap.id, ...snap.data() });
       }
-    });
-    return unsub;
+    }).catch(() => setNotFound(true));
   }, [id]);
 
-  if (loading) return null;
-
+  // Show shell immediately while data loads
   return (
     <>
       <Clouds />
@@ -55,12 +46,14 @@ export default function LinkDetail() {
             <div className="detail-box">
               <p style={{ color: '#5a8a5a' }}>Link not found.</p>
             </div>
+          ) : !link ? (
+            <div className="detail-box">
+              <p style={{ color: '#7aaa7a' }}>Loading…</p>
+            </div>
           ) : (
             <div className="detail-box">
               <PixelPlant variant={link.variant ?? 0} size={2} />
-
               <h1 className="detail-title">Your Links</h1>
-
               <a
                 href={link.url}
                 target="_blank"
