@@ -17,16 +17,27 @@ export default function NavMenu({ style }) {
 
   return (
     <div className="nav-menu-wrapper" ref={ref} style={style}>
-      <button className="hamburger-btn" onClick={() => setOpen(o => !o)} aria-label="Menu">
+      <button
+        className="hamburger-btn"
+        onClick={() => setOpen(o => !o)}
+        aria-label="Menu"
+        aria-expanded={open}
+      >
         <span /><span /><span />
       </button>
-      {open && (
-        <div className="nav-dropdown">
-          <Link href="/report" className="nav-dropdown-item" onClick={() => setOpen(false)}>
-            🔮 Personality Report
-          </Link>
-        </div>
-      )}
+
+      <div
+        className={`nav-sidebar-overlay${open ? ' open' : ''}`}
+        onClick={() => setOpen(false)}
+        aria-hidden={!open}
+      />
+
+      <aside className={`nav-sidebar${open ? ' open' : ''}`} aria-hidden={!open}>
+        <div className="nav-sidebar-header">Menu</div>
+        <Link href="/report" className="nav-sidebar-item" onClick={() => setOpen(false)}>
+          Personality Report
+        </Link>
+      </aside>
     </div>
   );
 }
