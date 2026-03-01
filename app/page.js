@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import { app } from '../lib/firebase';
 import PixelPlant from '../components/PixelPlant';
+import NavMenu from '../components/NavMenu';
 
 const auth = getAuth(app);
 const db   = getFirestore(app);
@@ -222,6 +223,7 @@ export default function Home() {
           <span className="logo">Link Garden</span>
           <span className="user-email">{user.email}</span>
           <button className="btn-logout" onClick={logOut}>Log out</button>
+          <NavMenu />
         </header>
 
         <div className="hero">

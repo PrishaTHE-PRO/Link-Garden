@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, collection, onSnapshot, query, where } from 'firebase/firestore';
 import { app } from '../../../lib/firebase';
+import NavMenu from '../../../components/NavMenu';
 
 const auth = getAuth(app);
 const db   = getFirestore(app);
@@ -41,6 +42,7 @@ export default function CategoryPage() {
         <header>
           <span style={{ fontSize: 22 }}>🌿</span>
           <span className="logo">Link Garden</span>
+          <NavMenu style={{ marginLeft: 'auto' }} />
         </header>
 
         <div className="detail-card">
