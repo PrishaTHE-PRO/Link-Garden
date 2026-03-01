@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, collection, onSnapshot, query, where } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc, increment } from 'firebase/firestore';
 import { app } from '../../../lib/firebase';
 import NavMenu from '../../../components/NavMenu';
 
@@ -185,6 +185,13 @@ export default function CategoryPage() {
     return unsub;
   }, [categoryName]);
 
+  function handleLinkClick(linkId) {
+    updateDoc(doc(db, 'links', linkId), {
+      clickCount: increment(1),
+      lastClickedAt: new Date(),
+    }).catch(() => {});
+  }
+
   useEffect(() => {
     if (!links || links.length === 0) return;
 
@@ -299,6 +306,7 @@ export default function CategoryPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="category-link-item"
+                        onClick={() => handleLinkClick(link.id)}
                       >
                         Open link
                       </a>

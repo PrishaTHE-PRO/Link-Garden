@@ -28,33 +28,37 @@ const SEASONS = {
     emoji: '🌸',
     label: 'Spring',
     background: 'linear-gradient(180deg, #fce4ec 0%, #f8bbd0 25%, #e8f5e9 100%)',
-    banner: 'rgba(252,220,235,0.75)',
-    border: 'rgba(240,160,200,0.5)',
+    front: 'rgba(252,220,235,0.9)',
+    border: 'rgba(240,160,200,0.6)',
     nameColor: '#ad1457',
+    back: 'linear-gradient(120deg, #f48fb1 30%, #f06292 88%, #fce4ec 40%, #e91e63 78%)',
   },
   summer: {
     emoji: '☀️',
     label: 'Summer',
     background: 'linear-gradient(180deg, #e3f2fd 0%, #c9e8f7 35%, #fff9c4 100%)',
-    banner: 'rgba(255,248,200,0.75)',
-    border: 'rgba(255,220,80,0.5)',
+    front: 'rgba(255,248,200,0.9)',
+    border: 'rgba(255,220,80,0.6)',
     nameColor: '#e65100',
+    back: 'linear-gradient(120deg, #ffcc02 30%, #ff8f00 88%, #fff9c4 40%, #ffb300 78%)',
   },
   autumn: {
     emoji: '🍂',
     label: 'Autumn',
     background: 'linear-gradient(180deg, #fff8e1 0%, #ffe0b2 45%, #ffccbc 100%)',
-    banner: 'rgba(255,228,185,0.75)',
-    border: 'rgba(255,160,80,0.5)',
+    front: 'rgba(255,228,185,0.9)',
+    border: 'rgba(255,160,80,0.6)',
     nameColor: '#bf360c',
+    back: 'linear-gradient(120deg, #ff8a65 30%, #e64a19 88%, #ffccbc 40%, #ff7043 78%)',
   },
   winter: {
     emoji: '❄️',
     label: 'Winter',
     background: 'linear-gradient(180deg, #e8eaf6 0%, #c5cae9 45%, #e3f2fd 100%)',
-    banner: 'rgba(220,228,250,0.75)',
-    border: 'rgba(160,185,235,0.5)',
+    front: 'rgba(220,228,250,0.9)',
+    border: 'rgba(160,185,235,0.6)',
     nameColor: '#1a237e',
+    back: 'linear-gradient(120deg, #5c6bc0 30%, #3949ab 88%, #e3f2fd 40%, #3f51b5 78%)',
   },
 };
 
@@ -125,14 +129,56 @@ export default function ReportPage() {
       const eraLinkCount     = thisMonthEntries[0]?.[1] ?? allTimeEntries[0]?.[1] ?? 0;
 
       const avgLinksPerCat = links.length / Math.max(categories.length, 1);
+      const topCatAllTime  = allTimeEntries[0]?.[1] ?? 0;
+      const topCatShare    = links.length > 0 ? topCatAllTime / links.length : 0;
       let breadthLabel;
-      if (categories.length >= 8 && avgLinksPerCat < 4)      breadthLabel = 'Wide Explorer';
-      else if (categories.length <= 4 && avgLinksPerCat >= 5) breadthLabel = 'Deep Diver';
-      else if (avgLinksPerCat >= 5)                           breadthLabel = 'Focused & Deep';
+      if (categories.length >= 6 && topCatShare < 0.35)      breadthLabel = 'Wide Explorer';
+      else if (topCatShare >= 0.6 || avgLinksPerCat >= 8)    breadthLabel = 'Deep Diver';
+      else if (categories.length <= 3 || avgLinksPerCat >= 5) breadthLabel = 'Focused & Deep';
       else                                                    breadthLabel = 'Balanced Curator';
 
-      const executionPct   = links.length > 0 ? Math.round((thisMonthLinks.length / links.length) * 100) : 0;
-      const executionValue = links.length > 0 ? `${executionPct}% this month` : 'Just getting started';
+      // Top domains within the dominant category
+      const dominantCatLinks = links.filter(l => l.categoryName === eraName);
+      const domainCounts = {};
+      for (const link of dominantCatLinks) {
+        try {
+          const domain = new URL(link.url).hostname.replace(/^www\./, '');
+          domainCounts[domain] = (domainCounts[domain] || 0) + 1;
+        } catch {}
+      }
+      const domainEntries = Object.entries(domainCounts).sort((a, b) => b[1] - a[1]);
+      const topDomains    = domainEntries.slice(0, 3).map(([d, n]) => ({ d, n }));
+
+      // Top sites across all links
+      const allDomainCounts = {};
+      for (const link of links) {
+        try {
+          const domain = new URL(link.url).hostname.replace(/^www\./, '');
+          allDomainCounts[domain] = (allDomainCounts[domain] || 0) + 1;
+        } catch {}
+      }
+      const topSitesOverall = Object.entries(allDomainCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([d, n]) => ({ d, n }));
+
+      // Top domain per category
+      const catDomainMap = {};
+      for (const link of links) {
+        try {
+          const domain = new URL(link.url).hostname.replace(/^www\./, '');
+          if (!catDomainMap[link.categoryName]) catDomainMap[link.categoryName] = {};
+          catDomainMap[link.categoryName][domain] = (catDomainMap[link.categoryName][domain] || 0) + 1;
+        } catch {}
+      }
+      const catTopDomains = Object.entries(catDomainMap).map(([cat, counts]) => {
+        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+        return { cat, topDomain: top?.[0], count: top?.[1] };
+      }).filter(x => x.topDomain);
+
+      const clickedLinks   = links.filter(l => (l.clickCount || 0) > 0);
+      const executionPct   = links.length > 0 ? Math.round((clickedLinks.length / links.length) * 100) : 0;
+      const executionValue = links.length > 0 ? `${executionPct}% of links opened` : 'Just getting started';
 
       const lastMonthEntries = Object.entries(lastMonthByCat).sort((a, b) => b[1] - a[1]);
       const lastMonthTopCat  = lastMonthEntries[0]?.[0] ?? null;
@@ -160,14 +206,20 @@ export default function ReportPage() {
         }))
         .sort((a, b) => b.thisMonth - a.thisMonth).slice(0, 5);
 
+      const thisMonthTop3 = thisMonthEntries.slice(0, 3).map(([cat, n]) => ({ cat, n }));
+      const lastMonthTop3 = lastMonthEntries.slice(0, 3).map(([cat, n]) => ({ cat, n }));
+
       const newComputed = { themeValue: eraName, breadthValue: breadthLabel, executionValue, driftValue };
       setComputed(newComputed);
 
       const stats = {
         dominantTheme: eraName, dominantThemeCount: eraLinkCount,
+        topDomains, topSitesOverall, catTopDomains,
         breadthLabel, totalCategories: categories.length, avgLinksPerCat: avgLinksPerCat.toFixed(1),
-        executionPct, thisMonthLinks: thisMonthLinks.length, allTimeLinks: links.length,
-        lastMonthTopCat, topCategories, monthOverMonth, topNewCategory, topNewCategoryCount,
+        topCatShare: Math.round(topCatShare * 100),
+        executionPct, clickedLinks: clickedLinks.length, allTimeLinks: links.length,
+        lastMonthTopCat, thisMonthTop3, lastMonthTop3,
+        topCategories, monthOverMonth, topNewCategory, topNewCategoryCount,
       };
 
       const res  = await fetch('/api/generate-report', {
@@ -223,14 +275,39 @@ export default function ReportPage() {
 
               {report && computed && season ? (
                 <>
-                  {/* Season banner */}
-                  <div
-                    className="season-banner"
-                    style={{ background: season.banner, border: `1px solid ${season.border}` }}
-                  >
-                    <span className="season-emoji">{season.emoji}</span>
-                    <span className="season-name" style={{ color: season.nameColor }}>{season.label}</span>
-                    <p className="season-reason">{report.seasonReason}</p>
+                  {/* Top row: Song card + Season flip card */}
+                  <div className="report-top-row">
+                    {/* Song card */}
+                    <div className="song-card">
+                      <div className="song-logo">
+                        <span className="song-icon">🎵</span>
+                        <span className="song-label">Your Soundtrack</span>
+                      </div>
+                      <div className="song-details">
+                        <a
+                          href={`https://open.spotify.com/search/${encodeURIComponent(`${report.song} ${report.artist}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="song-link"
+                        >
+                          {report.song}
+                        </a>
+                        <span>{report.artist}</span>
+                      </div>
+                    </div>
+
+                    {/* Season flip card */}
+                    <div className="flip-card">
+                      <div className="flip-card-inner">
+                        <div className="flip-card-front" style={{ background: season.front, border: `1px solid ${season.border}` }}>
+                          <span className="flip-season-emoji">{season.emoji}</span>
+                          <p className="flip-season-name" style={{ color: season.nameColor }}>{season.label}</p>
+                        </div>
+                        <div className="flip-card-back" style={{ background: season.front, border: `1px solid ${season.border}` }}>
+                          <p className="flip-season-reason" style={{ color: season.nameColor }}>{report.seasonReason}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* 4 personality cards */}
