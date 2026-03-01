@@ -1,4 +1,10 @@
 import './globals.css';
+import { Fraunces } from 'next/font/google';
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+});
 
 export const metadata = {
   title: 'Link Garden',
@@ -8,7 +14,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={fraunces.className}>{children}</body>
     </html>
   );
 }

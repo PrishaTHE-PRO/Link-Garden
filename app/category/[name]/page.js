@@ -159,6 +159,7 @@ function cleanShoppingTitle(title) {
     .replace(/\s+\d{2,}\s*$/i, '')
     .trim();
 }
+
 export default function CategoryPage() {
   const params           = useParams();
   const categoryName     = decodeURIComponent(params.name);
@@ -237,6 +238,7 @@ export default function CategoryPage() {
       cancelled = true;
     };
   }, [links, metaById]);
+
   return (
     <>
       <Clouds />

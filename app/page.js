@@ -171,9 +171,9 @@ export default function Home() {
         <Clouds />
         <div className="auth-screen">
           <div className="auth-card">
-            <span style={{ fontSize: 40 }}>🌿</span>
+            <span style={{ fontSize: 50 }}>🌿</span>
             <h2>Welcome to Link Garden</h2>
-            <p style={{ color: '#5a8a5a', fontSize: 14 }}>
+            <p style={{ color: '#5a8a5a', fontSize: 20 }}>
               {isSignup ? 'Create your account to get started.' : 'Sign in to grow your collection.'}
             </p>
             <input type="email" placeholder="Email" value={authEmail}
@@ -267,7 +267,9 @@ export default function Home() {
               <div className="garden-grid">
                 {categories.map(cat => (
                   <Link key={cat.id} href={`/category/${encodeURIComponent(cat.name)}`} className="plant-card">
-                    <PixelPlant variant={cat.variant ?? 0} size={1.4} />
+                    <div className="plant-image-crop">
+                      <PixelPlant variant={cat.variant ?? 0} size={2.35} />
+                    </div>
                     <span className="plant-cluster">{cat.name}</span>
                   </Link>
                 ))}
@@ -275,6 +277,7 @@ export default function Home() {
             )
           }
         </div>
+
       </div>
 
       {/* ── Category picker modal ── */}
