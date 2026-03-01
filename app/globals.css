@@ -66,6 +66,70 @@ body {
 .cloud-9  { width: 330px; height: 82px;  top: 10%; animation: floatCloud 63s linear infinite; animation-delay: -47s; }
 .cloud-10 { width: 190px; height: 48px;  top: 55%; animation: floatCloud 45s linear infinite; animation-delay: -32s; }
 
+.floating-bees {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.bee {
+  position: absolute;
+  width: clamp(45px, 4.5vw, 65px);
+  height: auto;
+  image-rendering: pixelated;
+  opacity: 0.9;
+  left: -12vw;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.bee-1 { top: 24%; animation-name: beeDriftA; animation-duration: 16s; animation-delay: -1s; }
+.bee-2 { top: 38%; animation-name: beeDriftB; animation-duration: 20s; animation-delay: -5s; }
+.bee-3 { top: 54%; animation-name: beeDriftC; animation-duration: 18s; animation-delay: -9s; }
+.bee-4 { top: 66%; animation-name: beeDriftD; animation-duration: 22s; animation-delay: -12s; }
+.bee-5 { top: 30%; animation-name: beeDriftE; animation-duration: 19s; animation-delay: -15s; }
+
+@keyframes beeDriftA {
+  0%   { transform: translateX(0) translateY(0) rotate(0deg); }
+  20%  { transform: translateX(22vw) translateY(-22px) rotate(6deg); }
+  45%  { transform: translateX(48vw) translateY(12px) rotate(-5deg); }
+  70%  { transform: translateX(80vw) translateY(-28px) rotate(7deg); }
+  100% { transform: translateX(122vw) translateY(6px) rotate(0deg); }
+}
+
+@keyframes beeDriftB {
+  0%   { transform: translateX(122vw) translateY(0) rotate(0deg); }
+  25%  { transform: translateX(94vw) translateY(18px) rotate(-7deg); }
+  50%  { transform: translateX(62vw) translateY(-20px) rotate(6deg); }
+  75%  { transform: translateX(30vw) translateY(14px) rotate(-5deg); }
+  100% { transform: translateX(-20vw) translateY(-4px) rotate(0deg); }
+}
+
+@keyframes beeDriftC {
+  0%   { transform: translateX(0) translateY(0) rotate(5deg); }
+  20%  { transform: translateX(20vw) translateY(24px) rotate(-4deg); }
+  45%  { transform: translateX(44vw) translateY(-16px) rotate(7deg); }
+  70%  { transform: translateX(78vw) translateY(20px) rotate(-6deg); }
+  100% { transform: translateX(122vw) translateY(-8px) rotate(0deg); }
+}
+
+@keyframes beeDriftD {
+  0%   { transform: translateX(122vw) translateY(0) rotate(0deg); }
+  30%  { transform: translateX(84vw) translateY(-24px) rotate(7deg); }
+  55%  { transform: translateX(52vw) translateY(10px) rotate(-6deg); }
+  80%  { transform: translateX(24vw) translateY(-18px) rotate(5deg); }
+  100% { transform: translateX(-18vw) translateY(2px) rotate(0deg); }
+}
+
+@keyframes beeDriftE {
+  0%   { transform: translateX(0) translateY(0) rotate(-4deg); }
+  25%  { transform: translateX(26vw) translateY(-20px) rotate(6deg); }
+  50%  { transform: translateX(54vw) translateY(22px) rotate(-7deg); }
+  75%  { transform: translateX(86vw) translateY(-14px) rotate(5deg); }
+  100% { transform: translateX(122vw) translateY(10px) rotate(-3deg); }
+}
+
 /* All content sits above clouds */
 .auth-screen,
 .dashboard,
@@ -240,6 +304,7 @@ header {
   width: 100%;
   max-width: 620px;
   padding: 0 20px;
+  filter: drop-shadow(0 0 10px rgba(76, 175, 80, 0.22));
 }
 
 .input-area input {
@@ -257,6 +322,10 @@ header {
 
 .input-area input::placeholder { color: #90b890; }
 .input-area input:focus { border-color: #4caf50; }
+
+.input-area:focus-within {
+  filter: drop-shadow(0 0 16px rgba(76, 175, 80, 0.42));
+}
 
 .input-area button {
   padding: 14px 22px;
@@ -920,6 +989,7 @@ header {
   align-items: center;
   width: 100%;
   min-height: 100vh;
+  font-family: 'Recoleta', 'Recoleta Regular', Georgia, serif;
 }
 
 .report-card {
@@ -960,6 +1030,13 @@ header {
   border-radius: 16px;
   padding: 20px 24px;
   box-shadow: 0 4px 20px rgba(100,160,120,0.10);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform-origin: center;
+}
+
+.report-section-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 26px rgba(100,160,120,0.16);
 }
 
 .report-section-label {

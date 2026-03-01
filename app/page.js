@@ -176,6 +176,7 @@ export default function Home() {
     return (
       <>
         <Clouds />
+        <FloatingBees />
         <div className="auth-screen">
           <div className="auth-card">
             <span style={{ fontSize: 50 }}>🌿</span>
@@ -224,6 +225,7 @@ export default function Home() {
   return (
     <>
       <Clouds />
+      <FloatingBees />
       <div className="dashboard">
         <header>
           <span style={{ fontSize: 22 }}>🌿</span>
@@ -371,6 +373,18 @@ function Clouds() {
         <div key={n} className={`cloud cloud-${n}`} />
       ))}
     </>
+  );
+}
+
+function FloatingBees() {
+  return (
+    <div className="floating-bees" aria-hidden="true">
+      <img src="/bee.png" alt="" className="bee bee-1" />
+      <img src="/flipped.png" alt="" className="bee bee-2" />
+      <img src="/bee.png" alt="" className="bee bee-3" />
+      <img src="/flipped.png" alt="" className="bee bee-4" />
+      <img src="/bee.png" alt="" className="bee bee-5" />
+    </div>
   );
 }
 

@@ -62,6 +62,20 @@ const SEASONS = {
   },
 };
 
+function funnyDriftLine(categoryName) {
+  const c = (categoryName || '').toLowerCase();
+  if (c.includes('shopping'))    return 'You are becoming a fashionista this month.';
+  if (c.includes('research'))    return 'You are in full detective mode this month.';
+  if (c.includes('internship'))  return 'Career arc unlocked: internship era in progress.';
+  if (c.includes('news'))        return 'Breaking news: you are the newsroom now.';
+  if (c.includes('hobby'))       return 'Hobby hero energy is strong this month.';
+  if (c.includes('youtube'))     return 'You are in your main-character binge era.';
+  if (c.includes('coding') || c.includes('programming') || c.includes('tech')) {
+    return 'You are speedrunning your tech glow-up this month.';
+  }
+  return `Plot twist: you are clearly obsessed with ${categoryName} right now.`;
+}
+
 export default function ReportPage() {
   const [user,          setUser]          = useState(null);
   const [loading,       setLoading]       = useState(true);
@@ -179,13 +193,34 @@ export default function ReportPage() {
       const clickedLinks   = links.filter(l => (l.clickCount || 0) > 0);
       const executionPct   = links.length > 0 ? Math.round((clickedLinks.length / links.length) * 100) : 0;
       const executionValue = links.length > 0 ? `${executionPct}% of links opened` : 'Just getting started';
+      const openedByCat = {};
+      for (const link of thisMonthLinks) {
+        const opens = Number(link.clickCount || 0);
+        if (!link.categoryName || opens <= 0) continue;
+        openedByCat[link.categoryName] = (openedByCat[link.categoryName] || 0) + opens;
+      }
+      const openedEntries = Object.entries(openedByCat).sort((a, b) => b[1] - a[1]);
+      const topOpenedCategoryThisMonth = openedEntries[0]?.[0] || null;
+      const topOpenedCountThisMonth = openedEntries[0]?.[1] || 0;
 
       const lastMonthEntries = Object.entries(lastMonthByCat).sort((a, b) => b[1] - a[1]);
       const lastMonthTopCat  = lastMonthEntries[0]?.[0] ?? null;
       let driftValue;
-      if (!lastMonthTopCat)                driftValue = 'Finding your path';
-      else if (lastMonthTopCat === eraName) driftValue = 'Staying the course';
-      else                                  driftValue = `${lastMonthTopCat} → ${eraName}`;
+      if (openedEntries.length >= 2) {
+        const [topCategory, topCount] = openedEntries[0];
+        const [, secondCount] = openedEntries[1];
+        driftValue = topCount > secondCount
+          ? funnyDriftLine(topCategory)
+          : 'Your curiosity is having a tie game this month.';
+      } else if (openedEntries.length === 1) {
+        driftValue = funnyDriftLine(openedEntries[0][0]);
+      } else if (!lastMonthTopCat) {
+        driftValue = 'Finding your path';
+      } else if (lastMonthTopCat === eraName) {
+        driftValue = `No category switch-up. Still deep in your ${eraName} era.`;
+      } else {
+        driftValue = `From ${lastMonthTopCat} to ${eraName}: your curiosity had a dramatic plot twist.`;
+      }
 
       const newCats = categories.filter(c => { const d = getTimestamp(c.createdAt); return d && d >= thisMonthStart; });
       let topNewCategory = null, topNewCategoryCount = 0;
@@ -220,6 +255,7 @@ export default function ReportPage() {
         executionPct, clickedLinks: clickedLinks.length, allTimeLinks: links.length,
         lastMonthTopCat, thisMonthTop3, lastMonthTop3,
         topCategories, monthOverMonth, topNewCategory, topNewCategoryCount,
+        topOpenedCategoryThisMonth, topOpenedCountThisMonth,
       };
 
       const res  = await fetch('/api/generate-report', {
@@ -228,7 +264,13 @@ export default function ReportPage() {
         body: JSON.stringify({ stats }),
       });
       const data = await res.json();
-      setReport(data.report);
+      const driftAccessLine = topOpenedCategoryThisMonth
+        ? ` This month, you accessed ${topOpenedCategoryThisMonth} the most (${topOpenedCountThisMonth} opens).`
+        : '';
+      setReport({
+        ...data.report,
+        driftDirection: `${data.report.driftDirection || ''}${driftAccessLine}`.trim(),
+      });
       try {
         localStorage.setItem(`lg_report_${user.uid}`, JSON.stringify({ report: data.report, computed: newComputed }));
       } catch {}
