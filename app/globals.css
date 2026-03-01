@@ -8,7 +8,7 @@ body {
   min-height: 100vh;
   background: linear-gradient(180deg, #c9e8f7 0%, #a8d4f0 60%, #90c8ee 100%);
   color: #1a3a1a;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Recoleta', 'Recoleta Regular', Georgia, serif;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -100,6 +100,7 @@ body {
 .auth-card h2 {
   color: #2e6b2e;
   font-size: 24px;
+  font-family: 'Fredoka', Georgia, serif;
   margin-bottom: 2px;
 }
 
@@ -111,6 +112,7 @@ body {
   color: #1a3a1a;
   width: 100%;
   font-size: 15px;
+  font-family: 'Fredoka', Georgia, serif;
   outline: none;
   transition: border-color 0.2s;
 }
@@ -415,15 +417,30 @@ header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 10px 10px 12px;
+  gap: 4px;
+  padding: 12px 12px 12px;
   background: transparent;
   border: none;
   border-radius: 16px;
   text-decoration: none;
-  width: 110px;
+  width: 170px;
   transition: transform 0.15s;
   cursor: pointer;
+}
+
+.plant-image-crop {
+  width: 188px;
+  height: 156px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.plant-image-crop img {
+  object-fit: cover !important;
+  object-position: center top;
+  transform: translateY(-4px);
 }
 
 .plant-card:hover {
@@ -440,11 +457,12 @@ header {
 }
 
 .plant-cluster {
-  font-size: 10px;
-  color: #6a9a6a;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2e6b2e;
   background: rgba(180,220,180,0.4);
   border-radius: 20px;
-  padding: 2px 8px;
+  padding: 5px 12px;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
