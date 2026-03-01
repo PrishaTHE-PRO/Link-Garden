@@ -49,8 +49,10 @@ export default function Home() {
   const newCatRef = useRef(null);
   const [plantPositions, setPlantPositions] = useState({});
   const [draggingId,     setDraggingId]     = useState(null);
+  const [bubbleCatId,    setBubbleCatId]    = useState(null);
   const dragDataRef  = useRef(null); // { id, startX, startY, mouseStartX, mouseStartY }
   const dragMovedRef = useRef(false);
+  const categoriesRef = useRef([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -132,6 +134,21 @@ export default function Home() {
       window.removeEventListener('pointermove', handleMove);
       window.removeEventListener('pointerup',   handleUp);
     };
+  }, []);
+
+  // Keep a ref to categories so the interval always sees the latest list
+  useEffect(() => { categoriesRef.current = categories; }, [categories]);
+
+  // Very rarely pop a "visit me" bubble on a random plant
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const cats = categoriesRef.current;
+      if (cats.length === 0) return;
+      const cat = cats[Math.floor(Math.random() * cats.length)];
+      setBubbleCatId(cat.id);
+      setTimeout(() => setBubbleCatId(null), 5000);
+    }, 30000); // every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
   function handlePlantPointerDown(e, cat) {
@@ -344,6 +361,11 @@ export default function Home() {
                       onPointerDown={e => handlePlantPointerDown(e, cat)}
                       onClick={() => handlePlantClick(cat.name)}
                     >
+                      {bubbleCatId === cat.id && (
+                        <div className="plant-bubble">
+                          <img src="/visitme.png" alt="" />
+                        </div>
+                      )}
                       <div className="plant-image-crop">
                         <PixelPlant variant={cat.variant ?? 0} size={2.9} />
                       </div>
