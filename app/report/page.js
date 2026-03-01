@@ -84,19 +84,28 @@ export default function ReportPage() {
   const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setLoading(false);
-      if (u) {
-        try {
-          const saved = localStorage.getItem(`lg_report_${u.uid}`);
-          if (saved) {
-            const { report: r, computed: c } = JSON.parse(saved);
-            setReport(r);
-            setComputed(c);
-          }
-        } catch {}
+      if (!u) return;
+
+      // If the user has no links, wipe any cached report and show just the button
+      const linksSnap = await getDocs(query(collection(db, 'links'), where('uid', '==', u.uid)));
+      if (linksSnap.empty) {
+        localStorage.removeItem(`lg_report_${u.uid}`);
+        setReport(null);
+        setComputed(null);
+        return;
       }
+
+      try {
+        const saved = localStorage.getItem(`lg_report_${u.uid}`);
+        if (saved) {
+          const { report: r, computed: c } = JSON.parse(saved);
+          setReport(r);
+          setComputed(c);
+        }
+      } catch {}
     });
     return unsub;
   }, []);
