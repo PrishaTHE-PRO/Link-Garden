@@ -3,58 +3,37 @@ import { flashModel } from '../../../lib/ai';
 export async function POST(req) {
   const { stats } = await req.json();
 
-  const momText = stats.monthOverMonth.length
-    ? stats.monthOverMonth.map(m => `${m.category}: ${m.thisMonth} this month vs ${m.lastMonth} last (${m.change})`).join(', ')
-    : 'not enough history yet';
-
   const thisMonthRanking = stats.thisMonthTop3.map(t => `${t.cat}(${t.n})`).join(', ') || 'none';
   const lastMonthRanking = stats.lastMonthTop3.map(t => `${t.cat}(${t.n})`).join(', ') || 'none';
   const topDomainsText   = stats.topDomains.map(d => `${d.d}(${d.n})`).join(', ') || 'none';
-  const topSitesText     = stats.topSitesOverall.map(d => `${d.d}(${d.n})`).join(', ') || 'none';
-  const catDomainsText   = stats.catTopDomains.map(c => `${c.cat}→${c.topDomain}(${c.count})`).join(', ') || 'none';
+  const topSitesText     = stats.topSitesOverall.slice(0, 3).map(d => `${d.d}(${d.n})`).join(', ') || 'none';
+  const catDomainsText   = stats.catTopDomains.slice(0, 4).map(c => `${c.cat}→${c.topDomain}(${c.count})`).join(', ') || 'none';
 
-  const prompt = `You are an insightful analyst for a personal link-saving app called Link Garden.
+  const prompt = `Analyst for Link Garden (link-saving app). Return ONLY valid JSON, no markdown, no newlines inside string values.
 
-User data:
-- Dominant theme this month: "${stats.dominantTheme}" (${stats.dominantThemeCount} links); top sites within this category: ${topDomainsText}
-- Most visited sites across all categories: ${topSitesText}
-- Top site per category: ${catDomainsText}
-- Garden style: ${stats.breadthLabel} — ${stats.totalCategories} categories, avg ${stats.avgLinksPerCat} links each; top category holds ${stats.topCatShare}% of all saved links
-- Execution: ${stats.clickedLinks} of ${stats.allTimeLinks} saved links have actually been opened (${stats.executionPct}%)
-- This month's top categories: ${thisMonthRanking}
-- Last month's top categories: ${lastMonthRanking}
-- Momentum by category: ${momText}
-- Top categories overall: ${stats.topCategories.join(', ')}
-${stats.topNewCategory ? `- Breakout new category this month: "${stats.topNewCategory}" (${stats.topNewCategoryCount} links)` : ''}
+Data:
+- Top category: "${stats.dominantTheme}" (${stats.dominantThemeCount} links); sites: ${topDomainsText}
+- Top sites overall: ${topSitesText}
+- Per-category top site: ${catDomainsText}
+- Style: ${stats.breadthLabel}, ${stats.totalCategories} cats, top cat=${stats.topCatShare}% of links
+- Opened: ${stats.clickedLinks}/${stats.allTimeLinks} links (${stats.executionPct}%)
+- This month: ${thisMonthRanking} | Last month: ${lastMonthRanking}
+${stats.topNewCategory ? `- New breakout: "${stats.topNewCategory}" (${stats.topNewCategoryCount} links)` : ''}
 
-Return ONLY a valid JSON object with exactly these 9 keys. Values for the sentence fields should be 3-4 rich, personal sentences in second person ("You..."). Be warm, specific, and insightful. NAME the actual websites and stores (e.g. "aerie.com", "github.com") — never just say "a site" or "various sources". Reference real category names and real domain names from the data above.
+Rules: second person ("You..."), 4-5 sentences per field, name actual domains, warm+perceptive tone, no generic phrases.
+Season: spring=new/wide, summer=productive/hot, autumn=deep/focused, winter=slow/curated.
 
-Season guide (pick the ONE that best fits this user right now):
-- "spring": new explorer, lots of new categories, fresh growth, wide breadth, just starting out
-- "summer": peak productivity, high execution ratio, hot streak, dominant theme blazing, energetic
-- "autumn": deep focused interests, staying the course, lots of depth per category, harvesting knowledge
-- "winter": reflective, narrow intentional focus, low recent activity, minimal but curated
+{"eraName":"poetic 2-5 word title for their current phase (NOT just the category name)","dominantTheme":"4-5 sentences: name every site from topDomainsText, why they return there, what it says about them now","breadthVsDepth":"4-5 sentences: use real numbers (${stats.totalCategories} cats, ${stats.topCatShare}%), what this reveals psychologically, name actual categories","executionRatio":"4-5 sentences: interpret ${stats.executionPct}% open rate, collector vs actor, what it says about their relationship with intention","driftDirection":"4-5 sentences: use real counts this month ${thisMonthRanking} vs last ${lastMonthRanking}, what the shift reveals about where they are in life","season":"spring|summer|autumn|winter","seasonReason":"one sentence why this season fits","song":"real well-known song matching their energy","artist":"artist name"}`;
 
-Song guide: pick ONE real, well-known song that perfectly mirrors this user's personality and current browsing energy. Match the mood — not just the topic. Think about the feeling, pace, and energy of their link-saving behavior.
-
-{
-  "eraName": "A creative, evocative 2-5 word era title that captures this user's current phase — poetic and original, NOT just the category name. Examples: 'The Deep Research Phase', 'The Renaissance Builder', 'The Quiet Collector', 'The Obsessive Learner Era'. Make it feel personal and cinematic.",
-  "dominantTheme": "3-4 sentences about their dominant focus. Name the specific sites they keep returning to (from topDomainsText). What does gravitating toward these sites say about them right now?",
-  "breadthVsDepth": "3-4 sentences about their ${stats.breadthLabel} style. Use the real numbers (${stats.totalCategories} categories, ${stats.topCatShare}% of links in top category). Describe what this pattern reveals about how they consume information.",
-  "executionRatio": "3-4 sentences interpreting their ${stats.executionPct}% link open rate. Are they a collector who hoards but never revisits, or someone who actually acts on what they save? What does this say about their relationship with information?",
-  "driftDirection": "3-4 sentences describing exactly how their interests shifted. Use real category names and counts: this month ${thisMonthRanking} vs last month ${lastMonthRanking}. What does this shift reveal about where their head is at?",
-  "season": "spring|summer|autumn|winter",
-  "seasonReason": "One sentence explaining exactly why this season fits their personality right now",
-  "song": "A real song title that matches this user's personality and current energy",
-  "artist": "The artist or band name"
-}
-
-Return ONLY the JSON. No markdown fences, no explanation.`;
-
+  let rawResponse = '';
   try {
     const result = await flashModel.generateContent(prompt);
-    const raw    = result.response.text().trim().replace(/^```json\s*/i, '').replace(/```\s*$/, '');
-    const parsed = JSON.parse(raw);
+    rawResponse  = result.response.text();
+    const raw    = rawResponse.trim().replace(/^```json\s*/i, '').replace(/```\s*$/, '');
+    // Replace all literal newlines/carriage returns with a space — safe because
+    // JSON structural whitespace can be spaces, and string values must not have raw newlines
+    const sanitized = raw.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ');
+    const parsed = JSON.parse(sanitized);
 
     const keys = ['eraName', 'dominantTheme', 'breadthVsDepth', 'executionRatio', 'driftDirection', 'season', 'seasonReason', 'song', 'artist'];
     for (const k of keys) {
@@ -67,6 +46,7 @@ Return ONLY the JSON. No markdown fences, no explanation.`;
     return Response.json({ report: parsed });
   } catch (err) {
     console.error('Gemini report error:', err.message);
+    console.error('Raw Gemini response was:', rawResponse.slice(0, 500));
 
     // Compute fallback season from stats
     let season = 'spring';

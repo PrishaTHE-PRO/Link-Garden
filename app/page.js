@@ -41,32 +41,37 @@ export default function Home() {
   const [authError,         setAuthError]         = useState('');
   const [isSignup,          setIsSignup]          = useState(false);
   const [showPrompt,        setShowPrompt]        = useState(false);
-  const [insight,           setInsight]           = useState('');
-  const [insightLoading,    setInsightLoading]    = useState(false);
+  const [linkCount,         setLinkCount]         = useState(0);
   const newCatRef = useRef(null);
 
   useEffect(() => {
-    let unsubCats = null;
+    let unsubCats  = null;
+    let unsubLinks = null;
 
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
 
-      if (unsubCats) { unsubCats(); unsubCats = null; }
+      if (unsubCats)  { unsubCats();  unsubCats  = null; }
+      if (unsubLinks) { unsubLinks(); unsubLinks = null; }
 
       if (u) {
-        const q = query(collection(db, 'categories'), where('uid', '==', u.uid));
-        unsubCats = onSnapshot(q, (snap) => {
+        const qCats = query(collection(db, 'categories'), where('uid', '==', u.uid));
+        unsubCats = onSnapshot(qCats, (snap) => {
           const cats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           cats.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
           setCategories(cats);
         });
+
+        const qLinks = query(collection(db, 'links'), where('uid', '==', u.uid));
+        unsubLinks = onSnapshot(qLinks, (snap) => setLinkCount(snap.size));
       } else {
         setCategories([]);
+        setLinkCount(0);
       }
     });
 
-    return () => { unsubAuth(); if (unsubCats) unsubCats(); };
+    return () => { unsubAuth(); if (unsubCats) unsubCats(); if (unsubLinks) unsubLinks(); };
   }, []);
 
   async function signUp() {
@@ -83,7 +88,7 @@ export default function Home() {
 
   async function logOut() {
     await signOut(auth);
-    setCategories([]); setInsight('');
+    setCategories([]);
   }
 
   // Step 1: user hits Plant → show category picker
@@ -121,31 +126,6 @@ export default function Home() {
       addDoc(collection(db, 'categories'), {
         uid: user.uid, name: categoryName, variant, createdAt: new Date(),
       }).catch(err => console.error('Failed to save category:', err));
-    }
-  }
-
-  async function generateInsight() {
-    if (!user || categories.length === 0) return;
-    setInsightLoading(true);
-    const stats = {
-      topClusters:          categories.slice(0, 5).map(c => c.name),
-      linkCountThisMonth:   categories.length,
-      newClustersThisMonth: categories.length,
-      breadthScore:         Math.min(categories.length / 10, 1).toFixed(2),
-      depthScore:           '1.0',
-    };
-    try {
-      const res = await fetch('/api/generate-insight', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stats }),
-      });
-      const { insight: text } = await res.json();
-      setInsight(text);
-    } catch {
-      setInsight('Your garden is growing beautifully. Keep exploring!');
-    } finally {
-      setInsightLoading(false);
     }
   }
 
@@ -247,15 +227,7 @@ export default function Home() {
           <div className="insight-box">
             <div className="insight-card">
               <h3>Garden Insight</h3>
-              {insight
-                ? <p>{insight}</p>
-                : <p style={{ color: '#7aaa7a', fontStyle: 'italic' }}>
-                    Generate an insight about your curiosity patterns.
-                  </p>
-              }
-              <button className="insight-btn" onClick={generateInsight} disabled={insightLoading}>
-                {insightLoading ? 'Thinking…' : '✨ Generate insight'}
-              </button>
+              <p>You've saved {linkCount} {linkCount === 1 ? 'link' : 'links'} across {categories.length} {categories.length === 1 ? 'topic' : 'topics'}. Your garden is growing — keep exploring!</p>
             </div>
           </div>
         )}
