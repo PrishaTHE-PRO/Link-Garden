@@ -477,35 +477,47 @@ header {
 .garden-grid-wrapper {
   margin-top: 40px;
   width: 100%;
-  max-width: 900px;
-  padding: 0 20px 80px;
+  max-width: 1200px;
+  padding: 0 20px 0;
 }
 
-.garden-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
+.garden-canvas {
+  position: relative;
+  width: 100%;
+  min-height: 520px;
+  touch-action: none;
+  user-select: none;
 }
 
 .plant-card {
+  position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 12px 12px 12px;
+  padding: 12px;
   background: transparent;
   border: none;
   border-radius: 16px;
   text-decoration: none;
-  width: 170px;
-  transition: transform 0.15s;
-  cursor: pointer;
+  width: 210px;
+  touch-action: none;
+  user-select: none;
+  transition: filter 0.15s, transform 0.15s;
+  cursor: grab;
+}
+
+.plant-card--dragging {
+  z-index: 100;
+  cursor: grabbing;
+  transform: scale(1.06);
+  filter: drop-shadow(0 10px 28px rgba(56,142,60,0.35));
+  transition: none;
 }
 
 .plant-image-crop {
-  width: 188px;
-  height: 156px;
+  width: 230px;
+  height: 195px;
   overflow: hidden;
   display: flex;
   align-items: flex-start;
@@ -518,7 +530,7 @@ header {
   transform: translateY(-4px);
 }
 
-.plant-card:hover {
+.plant-card:not(.plant-card--dragging):hover {
   transform: translateY(-5px);
 }
 
@@ -1028,8 +1040,8 @@ header {
 .report-card {
   margin-top: 60px;
   width: 100%;
-  max-width: 560px;
-  padding: 0 20px 80px;
+  max-width: 920px;
+  padding: 0 32px 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1052,7 +1064,7 @@ header {
 .report-sections {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 28px;
   width: 100%;
 }
 
@@ -1060,39 +1072,47 @@ header {
   background: rgba(255,255,255,0.68);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.9);
-  border-radius: 16px;
-  padding: 20px 24px;
+  border-radius: 20px;
+  padding: 44px 56px;
   box-shadow: 0 4px 20px rgba(100,160,120,0.10);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  transform-origin: center;
+  /* start invisible for scroll fade-in */
+  opacity: 0;
+  filter: blur(12px);
+  transform: scale(0.97);
+  transition: opacity 0.85s ease, filter 0.85s ease, transform 0.85s ease, box-shadow 0.2s ease;
 }
 
-.report-section-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 10px 26px rgba(100,160,120,0.16);
+.report-section-card.visible {
+  opacity: 1;
+  filter: blur(0px);
+  transform: scale(1);
+}
+
+.report-section-card.visible:hover {
+  box-shadow: 0 10px 32px rgba(100,160,120,0.18);
 }
 
 .report-section-label {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
+  letter-spacing: 1.4px;
   color: #6a9a6a;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .report-section-value {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
   color: #2f3928;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
   line-height: 1.2;
 }
 
 .report-section-text {
-  font-size: 13px;
+  font-size: 16px;
   color: #3a6a3a;
-  line-height: 1.7;
+  line-height: 1.8;
   margin: 0;
 }
 
@@ -1305,5 +1325,3 @@ header {
     grid-column: span 1;
   }
 }
-
-

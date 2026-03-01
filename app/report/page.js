@@ -110,6 +110,18 @@ export default function ReportPage() {
     return () => { document.body.style.background = prev; };
   }, [report?.season]);
 
+  // Fade-in cards as they scroll into view
+  useEffect(() => {
+    if (!report) return;
+    const cards = document.querySelectorAll('.report-section-card');
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+      { threshold: 0.15 }
+    );
+    cards.forEach(card => observer.observe(card));
+    return () => observer.disconnect();
+  }, [report]);
+
   async function generateReport() {
     if (!user) return;
     setReportLoading(true);

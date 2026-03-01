@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -47,6 +47,11 @@ export default function Home() {
   const [displayNameInput,  setDisplayNameInput]  = useState('');
   const [nameError,         setNameError]         = useState('');
   const newCatRef = useRef(null);
+  const [plantPositions, setPlantPositions] = useState({});
+  const [draggingId,     setDraggingId]     = useState(null);
+  const dragDataRef  = useRef(null); // { id, startX, startY, mouseStartX, mouseStartY }
+  const dragMovedRef = useRef(false);
+  const router = useRouter();
 
   useEffect(() => {
     let unsubCats  = null;
@@ -83,6 +88,68 @@ export default function Home() {
 
     return () => { unsubAuth(); if (unsubCats) unsubCats(); if (unsubLinks) unsubLinks(); };
   }, []);
+
+  // Load saved positions; assign defaults for any category that has no saved spot
+  useEffect(() => {
+    if (!user) { setPlantPositions({}); return; }
+    if (categories.length === 0) return;
+    const key = `garden-pos-${user.uid}`;
+    const saved = JSON.parse(localStorage.getItem(key) || '{}');
+    const updated = { ...saved };
+    categories.forEach((cat, i) => {
+      if (!updated[cat.id]) {
+        updated[cat.id] = { x: (i % 5) * 190 + 20, y: Math.floor(i / 5) * 210 + 20 };
+      }
+    });
+    setPlantPositions(updated);
+  }, [user?.uid, categories.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Attach window-level drag listeners once; use refs so no stale closures
+  useEffect(() => {
+    const handleMove = (e) => {
+      if (!dragDataRef.current) return;
+      const { id, startX, startY, mouseStartX, mouseStartY } = dragDataRef.current;
+      const dx = e.clientX - mouseStartX;
+      const dy = e.clientY - mouseStartY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragMovedRef.current = true;
+      setPlantPositions(prev => ({ ...prev, [id]: { x: startX + dx, y: startY + dy } }));
+    };
+    const handleUp = () => {
+      if (!dragDataRef.current) return;
+      const uid = dragDataRef.current.uid;
+      dragDataRef.current = null;
+      setDraggingId(null);
+      if (uid) {
+        setPlantPositions(prev => {
+          localStorage.setItem(`garden-pos-${uid}`, JSON.stringify(prev));
+          return prev;
+        });
+      }
+    };
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup',   handleUp);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup',   handleUp);
+    };
+  }, []);
+
+  function handlePlantPointerDown(e, cat) {
+    e.preventDefault();
+    dragMovedRef.current = false;
+    const pos = plantPositions[cat.id] || { x: 0, y: 0 };
+    dragDataRef.current = {
+      id: cat.id, uid: user?.uid,
+      startX: pos.x, startY: pos.y,
+      mouseStartX: e.clientX, mouseStartY: e.clientY,
+    };
+    setDraggingId(cat.id);
+  }
+
+  function handlePlantClick(catName) {
+    if (dragMovedRef.current) return;
+    router.push(`/category/${encodeURIComponent(catName)}`);
+  }
 
   async function signUp() {
     setAuthError('');
@@ -265,15 +332,25 @@ export default function Home() {
           {categories.length === 0
             ? <span className="empty-hint">Your planted links will appear here.</span>
             : (
-              <div className="garden-grid">
-                {categories.map(cat => (
-                  <Link key={cat.id} href={`/category/${encodeURIComponent(cat.name)}`} className="plant-card">
-                    <div className="plant-image-crop">
-                      <PixelPlant variant={cat.variant ?? 0} size={2.35} />
+              <div className="garden-canvas">
+                {categories.map(cat => {
+                  const pos = plantPositions[cat.id] || { x: 0, y: 0 };
+                  const isDragging = draggingId === cat.id;
+                  return (
+                    <div
+                      key={cat.id}
+                      className={`plant-card${isDragging ? ' plant-card--dragging' : ''}`}
+                      style={{ left: pos.x, top: pos.y, cursor: isDragging ? 'grabbing' : 'grab' }}
+                      onPointerDown={e => handlePlantPointerDown(e, cat)}
+                      onClick={() => handlePlantClick(cat.name)}
+                    >
+                      <div className="plant-image-crop">
+                        <PixelPlant variant={cat.variant ?? 0} size={2.9} />
+                      </div>
+                      <span className="plant-cluster">{cat.name}</span>
                     </div>
-                    <span className="plant-cluster">{cat.name}</span>
-                  </Link>
-                ))}
+                  );
+                })}
               </div>
             )
           }
@@ -387,6 +464,7 @@ function FloatingBees() {
     </div>
   );
 }
+
 
 
 
