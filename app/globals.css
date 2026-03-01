@@ -71,7 +71,7 @@ body {
 .dashboard,
 .detail-page,
 .report-page,
-.modal-overlay { position: relative; z-index: 1; }
+.modal-overlay { position: relative; z-index: 2; }
 
 /* ── Auth Screen ─────────────────────────────────── */
 .auth-screen {
@@ -262,6 +262,7 @@ header {
   padding: 14px 22px;
   font-size: 15px;
   font-weight: 600;
+  font-family: 'Recoleta', 'Recoleta Regular', Georgia, serif;
   background: #388e3c;
   color: #fff;
   border: 2px solid #388e3c;
@@ -311,9 +312,12 @@ header {
 }
 
 .empty-hint {
+  display: block;
+  width: 100%;
   font-size: 14px;
   color: #7aaa7a;
   font-style: italic;
+  text-align: center;
 }
 
 /* ── Auth Prompt Modal ───────────────────────────── */
@@ -584,7 +588,6 @@ header {
 
 .picker-section-label {
   font-size: 11px;
-  text-transform: uppercase;
   letter-spacing: 0.8px;
   color: #6a9a6a;
   font-weight: 600;
