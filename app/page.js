@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  updateProfile,
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -43,6 +44,9 @@ export default function Home() {
   const [showPrompt,        setShowPrompt]        = useState(false);
   const [insight,           setInsight]           = useState('');
   const [insightLoading,    setInsightLoading]    = useState(false);
+  const [showNamePrompt,    setShowNamePrompt]    = useState(false);
+  const [displayNameInput,  setDisplayNameInput]  = useState('');
+  const [nameError,         setNameError]         = useState('');
   const newCatRef = useRef(null);
 
   useEffect(() => {
@@ -55,6 +59,9 @@ export default function Home() {
       if (unsubCats) { unsubCats(); unsubCats = null; }
 
       if (u) {
+        setShowNamePrompt(!u.displayName);
+        setDisplayNameInput(u.displayName || '');
+        setNameError('');
         const q = query(collection(db, 'categories'), where('uid', '==', u.uid));
         unsubCats = onSnapshot(q, (snap) => {
           const cats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -62,6 +69,9 @@ export default function Home() {
           setCategories(cats);
         });
       } else {
+        setShowNamePrompt(false);
+        setDisplayNameInput('');
+        setNameError('');
         setCategories([]);
       }
     });
@@ -84,6 +94,22 @@ export default function Home() {
   async function logOut() {
     await signOut(auth);
     setCategories([]); setInsight('');
+  }
+
+  async function saveDisplayName() {
+    const trimmed = displayNameInput.trim();
+    if (!trimmed) {
+      setNameError('Please enter your name.');
+      return;
+    }
+    try {
+      await updateProfile(auth.currentUser, { displayName: trimmed });
+      setUser((prev) => (prev ? { ...prev, displayName: trimmed } : prev));
+      setShowNamePrompt(false);
+      setNameError('');
+    } catch {
+      setNameError('Could not save your name. Please try again.');
+    }
   }
 
   // Step 1: user hits Plant → show category picker
@@ -163,6 +189,7 @@ export default function Home() {
   }
 
   if (loading) return null;
+  const userLabel = user?.displayName?.trim() || user?.email || 'Gardener';
 
   // ── Auth screen ──────────────────────────────────
   if (!user) {
@@ -221,7 +248,7 @@ export default function Home() {
         <header>
           <span style={{ fontSize: 22 }}>🌿</span>
           <span className="logo">Link Garden</span>
-          <span className="user-email">{user.email}</span>
+          <span className="user-email">{userLabel}</span>
           <button className="btn-logout" onClick={logOut}>Log out</button>
           <NavMenu />
         </header>
@@ -306,6 +333,7 @@ export default function Home() {
               </p>
             )}
 
+
             <div className="picker-new">
               <input
                 ref={newCatRef}
@@ -332,6 +360,34 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {showNamePrompt && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <p style={{ marginBottom: 12 }}>What should we call you?</p>
+            <input
+              type="text"
+              placeholder="Your name"
+              value={displayNameInput}
+              onChange={e => setDisplayNameInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && saveDisplayName()}
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 8,
+                border: '1.5px solid #b0d4b0',
+                marginBottom: 10,
+                fontSize: 14,
+              }}
+            />
+            <p className="auth-error" style={{ marginBottom: 8 }}>{nameError}</p>
+            <button className="btn-primary" style={{ width: '100%' }} onClick={saveDisplayName}>
+              Save name
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -345,3 +401,6 @@ function Clouds() {
     </>
   );
 }
+
+
+
