@@ -10,21 +10,21 @@ A living, visual bookmark manager. Save links, watch them grow into a garden of 
   <tr>
     <td width="50%">
       <img src="screenshots/dashboard.png" alt="Garden dashboard" />
-      <p align="center"><em>Dashboard — your saved links growing as draggable plants</em></p>
+      <p align="center"><em>Dashboard (your saved links growing as draggable plants)</em></p>
     </td>
     <td width="50%">
       <img src="screenshots/personality-report.png" alt="Personality report" />
-      <p align="center"><em>Personality report — AI insights into your browsing habits</em></p>
+      <p align="center"><em>Personality report (AI insights into your browsing habits)</em></p>
     </td>
   </tr>
   <tr>
     <td width="50%">
       <img src="screenshots/login.png" alt="Login page" />
-      <p align="center"><em>Login page — sign in with Google to grow your garden</em></p>
+      <p align="center"><em>Login page (sign in with Google to grow your garden)</em></p>
     </td>
     <td width="50%">
       <img src="screenshots/links.png" alt="Links page" />
-      <p align="center"><em>Links page — browse the links saved under each plant</em></p>
+      <p align="center"><em>Links page (browse the links saved under each plant)</em></p>
     </td>
   </tr>
 </table>
